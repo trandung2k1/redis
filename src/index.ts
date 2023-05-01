@@ -7,6 +7,7 @@ import morgan from 'morgan';
 import sequelize from './config/db';
 import client from './config/redis';
 import routes from './routes';
+import { errorHandler, notFound } from './utils/errorHandler';
 const port: number = +process?.env?.PORT! || 4000;
 const app: Express = express();
 app.use(express.json({ limit: '10mb' }));
@@ -49,6 +50,8 @@ app.get('/todos', async (req: Request, res: Response) => {
     }
 });
 routes(app);
+app.use(notFound);
+app.use(errorHandler);
 sequelize
     .authenticate()
     .then(() => {
