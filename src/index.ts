@@ -14,10 +14,41 @@ app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 app.use(cors());
 app.use(helmet());
 app.use(morgan('combined'));
-// (async () => {
-//     await client.connect();
-//     await sequelize.sync({ force: true });
-// })();
+(async () => {
+    await client.connect();
+})();
+
+app.get('/', (req: Request, res: Response) => {
+    return res.status(200).json({
+        message: 'Welcome to server!',
+    });
+});
+app.get('/todos', async (req: Request, res: Response) => {
+    try {
+        const data = await client.get('todos');
+        if (data) {
+            console.log('Cache');
+            return res.status(200).json(JSON.parse(data));
+        } else {
+            const response = await fetch('https://jsonplaceholder.typicode.com/todos?_limit=3');
+            const todos = await response.json();
+            console.log('Call api');
+            await client.set('todos', JSON.stringify(todos), {
+                EX: 10,
+                NX: true,
+            });
+            return res.status(200).json(todos);
+        }
+    } catch (error) {
+        if (error instanceof Error) {
+            return res.status(500).json({
+                message: error.message,
+            });
+        }
+        console.log(error);
+    }
+});
+routes(app);
 sequelize
     .authenticate()
     .then(() => {
@@ -26,13 +57,8 @@ sequelize
     .catch((err) => {
         console.error('Unable to connect to the database:', err);
     });
-app.get('/', (req: Request, res: Response) => {
-    return res.status(200).json({
-        message: 'Welcome to server!',
-    });
-});
-routes(app);
 app.listen(port, async () => {
-    await sequelize.sync({ force: true });
+    //! Synchronizing all models at once
+    // await sequelize.sync({ force: true });
     console.log(`Server listening on http://localhost:${port}`);
 });

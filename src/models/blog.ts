@@ -9,11 +9,11 @@ const Blog = sequelize.define(
             primaryKey: true,
         },
         title: {
-            type: DataTypes.STRING,
+            type: DataTypes.TEXT('long'),
             allowNull: false,
         },
         body: {
-            type: DataTypes.STRING,
+            type: DataTypes.TEXT('long'),
             allowNull: false,
         },
     },
